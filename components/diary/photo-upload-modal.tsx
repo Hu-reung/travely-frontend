@@ -196,6 +196,34 @@ export function PhotoUploadModal({
       if (!response.ok) {
         const errorData = await response.json()
         console.error("❌ API 오류:", errorData)
+        console.error("📋 오류 상세:", {
+          status: response.status,
+          details: errorData.details,
+          isApiKeyError: errorData.isApiKeyError,
+          isRateLimitError: errorData.isRateLimitError,
+        })
+
+        // 사용자에게 오류 알림
+        if (errorData.isApiKeyError) {
+          toast({
+            title: "AI 분석 실패",
+            description: "OpenAI API 키 문제가 발생했습니다. 기본 키워드를 사용합니다.",
+            variant: "destructive",
+          })
+        } else if (errorData.isRateLimitError) {
+          toast({
+            title: "AI 분석 제한",
+            description: "요청 한도를 초과했습니다. 기본 키워드를 사용합니다.",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "AI 분석 실패",
+            description: "키워드 분석에 실패했습니다. 기본 키워드를 사용합니다.",
+            variant: "destructive",
+          })
+        }
+
         setSuggestedKeywords(fallbackKeywords)
         setIsAnalyzing(false)
         return

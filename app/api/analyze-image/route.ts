@@ -7,8 +7,12 @@ export async function POST(request: NextRequest) {
     const { imageData } = await request.json()
 
     if (!imageData) {
+      console.error("❌ 이미지 데이터 없음")
       return NextResponse.json({ error: "No image data provided" }, { status: 400 })
     }
+
+    console.log("🔍 이미지 분석 시작...")
+    console.log("📏 이미지 데이터 길이:", imageData.length)
 
     // AI가 이미지를 분석해 여행 관련 키워드를 한국어로 생성
     const result = await generateText({
@@ -70,20 +74,41 @@ Return **only** a valid JSON object in this format:
       maxTokens: 200,
     })
 
+    console.log("✅ OpenAI 응답 받음")
+    console.log("📝 응답 텍스트:", result.text)
+
     // JSON 파싱
     const jsonMatch = result.text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      throw new Error("Failed to parse JSON from response")
+      console.error("❌ JSON 파싱 실패 - AI 응답:", result.text)
+      return NextResponse.json({
+        error: "Failed to parse JSON from response",
+        rawResponse: result.text
+      }, { status: 500 })
     }
 
     const parsed = JSON.parse(jsonMatch[0])
+    console.log("✅ 파싱된 키워드:", parsed.keywords)
 
     return NextResponse.json({
       keywords: parsed.keywords || [],
       confidence: parsed.confidence || 0.8,
     })
   } catch (error) {
-    console.error("Error analyzing image:", error)
-    return NextResponse.json({ error: "Failed to analyze image" }, { status: 500 })
+    console.error("❌ 이미지 분석 오류:", error)
+
+    // 상세한 에러 정보 반환
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : ""
+
+    console.error("오류 메시지:", errorMessage)
+    console.error("스택 트레이스:", errorStack)
+
+    return NextResponse.json({
+      error: "Failed to analyze image",
+      details: errorMessage,
+      isApiKeyError: errorMessage.includes("API key") || errorMessage.includes("401"),
+      isRateLimitError: errorMessage.includes("rate limit") || errorMessage.includes("429"),
+    }, { status: 500 })
   }
 }
