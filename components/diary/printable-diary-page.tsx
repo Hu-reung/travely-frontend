@@ -507,6 +507,12 @@ export function PrintableDiaryPage({
         const page = pages[i] as HTMLElement
         console.log(`📸 페이지 ${i + 1}/${pages.length} 캡처 중...`)
 
+        // 페이지를 뷰포트로 스크롤 (캡처 전에 보이도록)
+        page.scrollIntoView({ behavior: 'auto', block: 'start' })
+
+        // 스크롤 완료 대기
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         // oklch 색상 호환성 처리
         const originalStyles = replaceOklchWithHex(page)
 
@@ -525,6 +531,8 @@ export function PrintableDiaryPage({
           height: page.offsetHeight,
           windowWidth: page.scrollWidth,
           windowHeight: page.scrollHeight,
+          scrollY: -window.scrollY,
+          scrollX: -window.scrollX,
           ignoreElements: (el) => {
             // 컨트롤 요소와 사이드바 제외 (resize handles, hover rings, sidebar 등)
             return (
