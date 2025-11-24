@@ -500,18 +500,30 @@ export function PrintableDiaryPage({
 
       // 모든 페이지 요소 찾기
       const pages = document.querySelectorAll('.diary-page')
+      console.log(`🔍 발견된 페이지 수: ${pages.length}`)
+      console.log(`🔍 페이지 요소들:`, Array.from(pages).map((p, i) => `페이지 ${i + 1}`))
+
+      if (pages.length === 0) {
+        console.error("❌ .diary-page 클래스를 가진 요소를 찾을 수 없습니다!")
+        alert("다이어리 페이지를 찾을 수 없습니다. 페이지를 새로고침해주세요.")
+        setIsSavingComplete(false)
+        return
+      }
+
       const imageDataArray: string[] = []
 
       // 각 페이지를 개별적으로 캡처
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement
-        console.log(`📸 페이지 ${i + 1}/${pages.length} 캡처 중...`)
+        console.log(`📸 페이지 ${i + 1}/${pages.length} 캡처 시작...`)
+        console.log(`📏 페이지 크기: ${page.offsetWidth}x${page.offsetHeight}`)
+        console.log(`📍 페이지 위치: top=${page.offsetTop}, left=${page.offsetLeft}`)
 
         // 페이지를 뷰포트로 스크롤 (캡처 전에 보이도록)
         page.scrollIntoView({ behavior: 'auto', block: 'start' })
 
         // 스크롤 완료 대기
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 500))
 
         // oklch 색상 호환성 처리
         const originalStyles = replaceOklchWithHex(page)
@@ -520,6 +532,7 @@ export function PrintableDiaryPage({
         const computedStyle = window.getComputedStyle(page)
         const pageBgColor = computedStyle.backgroundColor || "#faf8f3"
 
+        console.log(`🎨 html2canvas 호출 중...`)
         const canvas = await html2canvas(page, {
           backgroundColor: pageBgColor,
           scale: 2,
@@ -529,12 +542,8 @@ export function PrintableDiaryPage({
           imageTimeout: 10000,
           width: page.offsetWidth,
           height: page.offsetHeight,
-          windowWidth: page.scrollWidth,
-          windowHeight: page.scrollHeight,
-          scrollY: -window.scrollY,
-          scrollX: -window.scrollX,
           ignoreElements: (el) => {
-            // 컨트롤 요소와 사이드바 제외 (resize handles, hover rings, sidebar 등)
+            // 컨트롤 요소, 사이드바, 스크롤바 제외
             return (
               el.classList.contains("print:hidden") ||
               el.classList.contains("ring-2") ||
@@ -542,10 +551,15 @@ export function PrintableDiaryPage({
               el.classList.contains("cursor-nesw-resize") ||
               el.classList.contains("cursor-ns-resize") ||
               el.classList.contains("cursor-ew-resize") ||
-              el.classList.contains("diary-sidebar")
+              el.classList.contains("diary-sidebar") ||
+              el.tagName === "SCROLLBAR" ||
+              (el as HTMLElement).style?.overflow === "scroll" ||
+              (el as HTMLElement).style?.overflow === "auto"
             )
           },
         })
+
+        console.log(`✅ Canvas 생성 완료: ${canvas.width}x${canvas.height}`)
 
         // 원래 스타일 복원
         originalStyles.forEach((original, el) => {
@@ -571,8 +585,12 @@ export function PrintableDiaryPage({
         }
 
         const imageData = canvas.toDataURL("image/png").split(",")[1]
+        console.log(`💾 이미지 데이터 크기: ${imageData.length} bytes`)
         imageDataArray.push(imageData)
+        console.log(`✅ 페이지 ${i + 1} 캡처 완료`)
       }
+
+      console.log(`✅ 전체 ${imageDataArray.length}개 페이지 캡처 완료`)
 
       console.log("📤 완료된 다이어리 저장 중:", {
         diaryId,
