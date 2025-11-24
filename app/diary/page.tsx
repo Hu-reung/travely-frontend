@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { Plus, Sun, Sunset, Moon, Edit2, Trash2, FileText, Clock, MapPin, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -82,7 +82,7 @@ function safeGetDate(timestamp: Date | string | undefined): Date | null {
   }
 }
 
-export default function TravelDiary() {
+function TravelDiaryContent() {
   const [diaries, setDiaries] = useState<Diary[]>([])
   const [currentDiaryId, setCurrentDiaryId] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -984,5 +984,20 @@ export default function TravelDiary() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function TravelDiary() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">다이어리를 불러오는 중...</p>
+        </div>
+      </div>
+    }>
+      <TravelDiaryContent />
+    </Suspense>
   )
 }
