@@ -512,18 +512,39 @@ export function PrintableDiaryPage({
 
       const imageDataArray: string[] = []
 
+      // 스크롤을 최상단으로 이동하고 모든 페이지를 동시에 렌더링
+      window.scrollTo(0, 0)
+
+      // 모든 페이지를 강제로 보이게 설정
+      const pageStates: Array<{
+        page: HTMLElement
+        originalDisplay: string
+        originalVisibility: string
+        originalOpacity: string
+      }> = []
+
+      pages.forEach((page) => {
+        const htmlPage = page as HTMLElement
+        pageStates.push({
+          page: htmlPage,
+          originalDisplay: htmlPage.style.display,
+          originalVisibility: htmlPage.style.visibility,
+          originalOpacity: htmlPage.style.opacity,
+        })
+        htmlPage.style.display = 'block'
+        htmlPage.style.visibility = 'visible'
+        htmlPage.style.opacity = '1'
+      })
+
+      // 모든 페이지 렌더링 대기
+      await new Promise(resolve => setTimeout(resolve, 500))
+
       // 각 페이지를 개별적으로 캡처
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement
         console.log(`📸 페이지 ${i + 1}/${pages.length} 캡처 시작...`)
         console.log(`📏 페이지 크기: ${page.offsetWidth}x${page.offsetHeight}`)
         console.log(`📍 페이지 위치: top=${page.offsetTop}, left=${page.offsetLeft}`)
-
-        // 페이지를 뷰포트로 스크롤 (캡처 전에 보이도록)
-        page.scrollIntoView({ behavior: 'auto', block: 'start' })
-
-        // 스크롤 완료 대기
-        await new Promise(resolve => setTimeout(resolve, 500))
 
         // oklch 색상 호환성 처리
         const originalStyles = replaceOklchWithHex(page)
@@ -591,6 +612,13 @@ export function PrintableDiaryPage({
       }
 
       console.log(`✅ 전체 ${imageDataArray.length}개 페이지 캡처 완료`)
+
+      // 모든 페이지 스타일 원래대로 복원
+      pageStates.forEach(({ page, originalDisplay, originalVisibility, originalOpacity }) => {
+        page.style.display = originalDisplay
+        page.style.visibility = originalVisibility
+        page.style.opacity = originalOpacity
+      })
 
       console.log("📤 완료된 다이어리 저장 중:", {
         diaryId,
