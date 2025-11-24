@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useRef, useState, useEffect } from "react"
-import { ImageIcon, Upload, X, Printer, ArrowLeft, Smile, Sparkles } from "lucide-react"
+import { X, Printer, ArrowLeft, Smile, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import html2canvas from "html2canvas"
 import { PhotoLayoutFamily } from "./layouts/photo-layout-family"
@@ -159,7 +159,6 @@ export function PrintableDiaryPage({
   layoutType = "default",
 }: PrintableDiaryPageProps) {
   const pageRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // --- 너가 수정한 font system 적용 ---
   const [fontSize, setFontSize] = useState(18)
@@ -214,10 +213,6 @@ export function PrintableDiaryPage({
     { id: "default-37", src: "/emotion/yj7.png" },
   ]
 
-  // 업로드한 사진 (사이드바에만 표시)
-  const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ id: string; src: string }>>([])
-
-  const [draggedPhotoSrc, setDraggedPhotoSrc] = useState<string | null>(null)
   const [draggingPhotoId, setDraggingPhotoId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null)
@@ -246,43 +241,26 @@ export function PrintableDiaryPage({
     }
   }, [onMounted])
 
-  // 파일 업로드
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files) return
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const src = event.target?.result as string
-        setUploadedPhotos((prev) => [...prev, { id: `upload-${Date.now()}-${Math.random()}`, src }])
-      }
-      reader.readAsDataURL(file)
-    })
-    if (fileInputRef.current) fileInputRef.current.value = ""
+  const [draggedEmojiSrc, setDraggedEmojiSrc] = useState<string | null>(null)
+
+  const handleEmojiDragStart = (emojiSrc: string) => {
+    setDraggedEmojiSrc(emojiSrc)
   }
 
-  const handlePhotoDragStart = (photoSrc: string) => {
-    setDraggedPhotoSrc(photoSrc)
-  }
-
-  // Drop
-  const handlePageDrop = (e: React.DragEvent, pageElement: HTMLDivElement, pageIndex: number) => {
+  const handleEmojiDrop = (e: React.DragEvent, pageElement: HTMLDivElement, pageIndex: number) => {
     e.preventDefault()
-    if (!draggedPhotoSrc) return
+    if (!draggedEmojiSrc) return
 
     const rect = pageElement.getBoundingClientRect()
     const defaultW = 20 * 3.78
     const defaultH = 20 * 3.78
 
-    // Calculate position and constrain within page boundaries
     let x = e.clientX - rect.left - defaultW / 2
     let y = e.clientY - rect.top - defaultH / 2
 
-    // Page boundaries (accounting for page dimensions)
     const pageWidth = rect.width
     const pageHeight = rect.height
 
-    // Clamp position so emoji stays within bounds
     x = Math.max(0, Math.min(x, pageWidth - defaultW))
     y = Math.max(0, Math.min(y, pageHeight - defaultH))
 
@@ -293,8 +271,8 @@ export function PrintableDiaryPage({
       [pageIndex]: [
         ...currentPagePhotos,
         {
-          id: `photo-${Date.now()}`,
-          src: draggedPhotoSrc,
+          id: `emoji-${Date.now()}`,
+          src: draggedEmojiSrc,
           x,
           y,
           width: 20,
@@ -303,7 +281,7 @@ export function PrintableDiaryPage({
       ],
     })
 
-    setDraggedPhotoSrc(null)
+    setDraggedEmojiSrc(null)
   }
 
   // MouseDown for move
@@ -446,9 +424,6 @@ export function PrintableDiaryPage({
     })
   }
 
-  const handleRemoveUploadedPhoto = (photoId: string) => {
-    setUploadedPhotos(uploadedPhotos.filter((photo) => photo.id !== photoId))
-  }
 
   // AI 추천 함수
   const handleAiRecommendation = async () => {
@@ -786,7 +761,7 @@ export function PrintableDiaryPage({
                           key={photo.id}
                           draggable
                           onDragStart={(e) => {
-                            handlePhotoDragStart(photo.src)
+                            handleEmojiDragStart(photo.src)
 
                           }}
                           onClick={(e) => {
@@ -845,7 +820,7 @@ export function PrintableDiaryPage({
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 const target = e.currentTarget as HTMLDivElement
-                handlePageDrop(e, target, pageIdx)
+                handleEmojiDrop(e, target, pageIdx)
               }}
               onClick={() => setSelectedPhotoId(null)}
             >
@@ -1036,41 +1011,6 @@ export function PrintableDiaryPage({
           ))}
         </div>
 
-        {/* Sidebar */}
-        <div className="flex-shrink-0 w-40 bg-white border rounded-lg p-3 shadow-sm print:hidden sticky top-4 h-fit diary-sidebar">
-          <div className="flex items-center gap-2 mb-3">
-            <ImageIcon className="w-4 h-4 text-gray-600" />
-            <h3 className="font-semibold text-sm">포인트 추가</h3>
-          </div>
-          <p className="text-xs text-gray-500 mb-3">드래그해서 사용</p>
-
-          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
-          <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full mb-3" size="sm">
-            <Upload className="w-3 h-3 mr-1" /> 업로드
-          </Button>
-
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {uploadedPhotos.map((photo) => (
-              <div key={photo.id} className="relative group">
-                <div draggable onDragStart={() => handlePhotoDragStart(photo.src)} className="cursor-grab hover:ring-2 hover:ring-blue-400 transition-all">
-                  <img src={photo.src} className="w-full h-20 object-cover rounded" />
-                </div>
-                <button
-                  onClick={() => handleRemoveUploadedPhoto(photo.id)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {uploadedPhotos.length > 0 && (
-            <div className="mt-3 pt-3 border-t text-xs text-gray-500">
-              💡 드래그로 추가 가능
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Print Styles */}
