@@ -89,7 +89,8 @@ export function DiaryPreview({
       if (!diaryId) return
 
       try {
-        const response = await fetch(`http://localhost:3001/api/layouts/recommend/${diaryId}`, {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        const response = await fetch(`${API_BASE_URL}/api/layouts/recommend/${diaryId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         })
@@ -156,7 +157,8 @@ export function DiaryPreview({
         try {
           console.log("💾 diaries 컬렉션에 content 저장 시작:", diaryId)
 
-          const saveResponse = await fetch("http://localhost:3001/api/diaries/update-content", {
+          const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+          const saveResponse = await fetch(`${API_BASE_URL}/api/diaries/update-content`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -199,7 +201,8 @@ export function DiaryPreview({
     setIsSaving(true)
 
     try {
-      const response = await fetch("http://localhost:3001/api/diaries/update-content", {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      const response = await fetch(`${API_BASE_URL}/api/diaries/update-content`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

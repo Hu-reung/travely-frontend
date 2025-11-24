@@ -84,7 +84,8 @@ export function Sidebar({ diaries, currentDiaryId, onSelectDiary, onNewDiary, on
   // 완료 여부 확인
   const checkDiaryCompletion = async (diaryId: string): Promise<boolean> => {
     try {
-      const res = await fetch(`http://localhost:3001/api/diaries/status/${diaryId}`)
+      const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      const res = await fetch(`${API_BASE_URL}/api/diaries/status/${diaryId}`)
       const data = await res.json()
       return data.isCompleted === true
     } catch (e) {

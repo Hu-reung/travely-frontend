@@ -257,7 +257,7 @@ function TravelDiaryContent() {
   const selectDiary = async (diaryId: string, forceShowPrintable?: boolean) => {
     try {
       console.log("🔍 selectDiary 호출:", diaryId, "완료 여부:", forceShowPrintable)
-      
+
       if (forceShowPrintable) {
         setCurrentDiaryId(diaryId)
         setShowCompletedViewer(true)
@@ -267,7 +267,8 @@ function TravelDiaryContent() {
         return
       }
 
-      const response = await fetch(`http://localhost:3001/api/diaries/${diaryId}/detail`)
+      const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      const response = await fetch(`${API_BASE_URL}/api/diaries/${diaryId}/detail`)
       const data = await response.json()
       
       console.log("📥 API 응답:", data)
@@ -528,8 +529,9 @@ function TravelDiaryContent() {
 
     try {
       console.log("🗑️ 삭제 요청 시작:", diaryId)
-      
-      const response = await fetch(`http://localhost:3001/api/diaries/${diaryId}`, {
+
+      const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+      const response = await fetch(`${API_BASE_URL}/api/diaries/${diaryId}`, {
         method: 'DELETE',
       })
 

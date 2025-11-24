@@ -23,7 +23,8 @@ export function CompletedDiaryViewer({ diaryId, onBack }: CompletedDiaryViewerPr
       try {
         console.log("📥 완료된 다이어리 로딩:", diaryId)
 
-        const res = await fetch(`http://localhost:3001/api/diaries/${diaryId}`)
+        const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
+        const res = await fetch(`${API_BASE_URL}/api/diaries/${diaryId}`)
         const data = await res.json()
 
         if (data.success) {
@@ -31,7 +32,7 @@ export function CompletedDiaryViewer({ diaryId, onBack }: CompletedDiaryViewerPr
           setDiaryData(data.data)
 
           try {
-            const printRes = await fetch(`http://localhost:3001/api/diaries/printable/${diaryId}`)
+            const printRes = await fetch(`${API_BASE_URL}/api/diaries/printable/${diaryId}`)
             const printData = await printRes.json()
 
             if (printData.success && printData.data?.pages) {
