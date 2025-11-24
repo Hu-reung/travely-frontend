@@ -397,7 +397,7 @@ export function PhotoUploadModal({
                   <Camera className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <p className="text-foreground font-medium mb-2">Drop your photo here or click to browse</p>
-                <p className="text-sm text-muted-foreground mb-4">Supports JPG, PNG, GIF up to 10MB</p>
+                <p className="text-sm text-muted-foreground mb-4">Supports JPG, PNG, GIF up to 20MB</p>
                 <Button onClick={() => fileInputRef.current?.click()} className="bg-primary hover:bg-primary/90">
                   <Upload className="w-4 h-4 mr-2" />
                   Choose File
