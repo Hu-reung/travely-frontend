@@ -358,19 +358,29 @@ function TravelDiaryContent() {
   }
 
   const updatePhotoSlot = (slotId: string, photo: string, keywords: string[], exifData?: ExifData, imageId?: string) => {
+    console.log("🟢 [UpdateSlot] 슬롯 업데이트 시작")
+    console.log("🟢 [UpdateSlot] slotId:", slotId)
+    console.log("🟢 [UpdateSlot] imageId:", imageId)
+    console.log("🟢 [UpdateSlot] imageId 타입:", typeof imageId)
+
     setPhotoSlots((slots) => {
-      const updatedSlots = slots.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              id: imageId || slot.id,
-              photo,
-              keywords,
-              exifData,
-              timestamp: getTimestamp(exifData?.timestamp, Date.now()),
-            }
-          : slot,
-      )
+      const updatedSlots = slots.map((slot) => {
+        if (slot.id === slotId) {
+          const newId = imageId || slot.id
+          console.log("🟢 [UpdateSlot] 슬롯 발견! 기존 ID:", slot.id, "→ 새 ID:", newId)
+          return {
+            ...slot,
+            id: newId,
+            photo,
+            keywords,
+            exifData,
+            timestamp: getTimestamp(exifData?.timestamp, Date.now()),
+          }
+        }
+        return slot
+      })
+
+      console.log("🟢 [UpdateSlot] 업데이트된 슬롯들:", updatedSlots.map(s => ({ id: s.id, hasPhoto: !!s.photo })))
       return sortPhotosByTime(updatedSlots)
     })
   }
@@ -443,13 +453,21 @@ function TravelDiaryContent() {
     setIsSaving(true)
 
     try {
+      console.log("🟡 [HandleNextStep] 다이어리 저장 시작")
+      console.log("🟡 [HandleNextStep] 전체 photoSlots:", photoSlots)
+
       const uploadedSlots = photoSlots.filter(slot => {
         const hasPhoto = !!slot.photo || !!slot.imageData
         const hasValidId = slot.id && !slot.id.startsWith('temp')
+        console.log(`🟡 [HandleNextStep] 슬롯 검사 - ID: ${slot.id}, hasPhoto: ${hasPhoto}, hasValidId: ${hasValidId}`)
         return hasPhoto && hasValidId
       })
 
+      console.log("🟡 [HandleNextStep] 업로드된 슬롯 수:", uploadedSlots.length)
+      console.log("🟡 [HandleNextStep] 업로드된 슬롯 IDs:", uploadedSlots.map(s => s.id))
+
       if (uploadedSlots.length === 0) {
+        console.error("🔴 [HandleNextStep] 업로드된 슬롯 없음!")
         toast({
           title: "저장 실패",
           description: "백엔드에 업로드된 사진이 없습니다. 사진을 다시 업로드해주세요.",
@@ -460,6 +478,7 @@ function TravelDiaryContent() {
       }
 
       const photoSlotIds = uploadedSlots.map(slot => slot.id)
+      console.log("🟡 [HandleNextStep] 백엔드로 전송할 photoSlotIds:", photoSlotIds)
 
       const response = await createDiary({
         userId,

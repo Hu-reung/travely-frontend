@@ -360,6 +360,8 @@ export function PhotoUploadModal({
 
       try {
         const tempSlotId = Date.now().toString()
+        console.log("🔵 [Upload] 업로드 시작 - tempSlotId:", tempSlotId)
+
         const response = await uploadImage({
           userId,
           image: selectedFile,
@@ -367,18 +369,26 @@ export function PhotoUploadModal({
           tempSlotId,
         })
 
+        console.log("🔵 [Upload] 업로드 응답:", response)
+
         if (response.success && response.data) {
           const imageData = response.data.imageData
           const mimeType = response.data.mimeType || "image/jpeg"
           const fullImageUrl = `data:${mimeType};base64,${imageData}`
+          const imageId = response.data.imageId
 
-          onSave(fullImageUrl, selectedKeywords, exifData, response.data.imageId)
+          console.log("🔵 [Upload] 받은 imageId:", imageId)
+          console.log("🔵 [Upload] imageId 타입:", typeof imageId)
+          console.log("🔵 [Upload] onSave 호출 - imageId:", imageId)
+
+          onSave(fullImageUrl, selectedKeywords, exifData, imageId)
 
           toast({
             title: "업로드 성공",
             description: "이미지가 성공적으로 업로드되었습니다.",
           })
         } else {
+          console.error("🔴 [Upload] 업로드 실패:", response.error)
           toast({
             title: "업로드 실패",
             description: response.error || "이미지 업로드에 실패했습니다.",
