@@ -178,17 +178,50 @@ export function PhotoUploadModal({
     return address || null
   }
 
+  // 이미지 리사이즈 함수 (AI 분석용)
+  const resizeImage = (dataUrl: string, maxWidth: number): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // 최대 너비에 맞게 크기 조정
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0, width, height)
+
+        // JPEG로 압축 (품질 80%)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+      img.src = dataUrl
+    })
+  }
+
   // ✅ AI 이미지 분석으로 키워드 추천 (useCallback 추가)
   const analyzeImage = useCallback(async (imageData: string) => {
     setIsAnalyzing(true)
     try {
       console.log("📤 AI 분석 요청 시작")
+
+      // 이미지 크기를 줄여서 전송 (최대 800px)
+      const resizedImage = await resizeImage(imageData, 800)
+      console.log("📏 원본 크기:", imageData.length, "압축 후:", resizedImage.length)
+
       const response = await fetch("/api/analyze-image", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageData }),
+        body: JSON.stringify({ imageData: resizedImage }),
       })
 
       console.log("📥 응답 상태:", response.status)
